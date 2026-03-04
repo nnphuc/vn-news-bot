@@ -10,6 +10,13 @@ from vn_news_bot.domain.models import (
 )
 from vn_news_bot.services.weather import get_forecast_suggestion, get_weather_suggestion
 
+_MD_SPECIAL = str.maketrans({"_": r"\_", "*": r"\*", "`": r"\`", "[": r"\["})
+
+
+def _escape_md(text: str) -> str:
+    """Escape Telegram legacy Markdown V1 special characters."""
+    return text.translate(_MD_SPECIAL)
+
 
 def format_news_message(articles: list[NewsArticle]) -> str:
     if not articles:
@@ -17,23 +24,19 @@ def format_news_message(articles: list[NewsArticle]) -> str:
 
     lines = ["📰 *Tin tức mới nhất*\n"]
     for i, article in enumerate(articles, 1):
-        lines.append(f"{i}. [{article.title}]({article.url})")
+        lines.append(f"{i}. [{_escape_md(article.title)}]({article.url})")
         if article.source:
-            lines.append(f"   _Nguồn: {article.source}_\n")
+            lines.append(f"   _Nguồn: {_escape_md(article.source)}_\n")
     return "\n".join(lines)
 
 
 def _format_article_line(item: ScoredArticle) -> str:
+    title = _escape_md(item.article.title)
     if item.is_trending:
-        sources = ", ".join(item.trending_sources)
-        return (
-            f"🔥 [{item.article.title}]({item.article.url})"
-            f" · 📡 _{sources}_"
-        )
-    return (
-        f"▸ [{item.article.title}]({item.article.url})"
-        f" · _{item.article.source}_"
-    )
+        sources = _escape_md(", ".join(item.trending_sources))
+        return f"🔥 [{title}]({item.article.url}) · 📡 _{sources}_"
+    source = _escape_md(item.article.source)
+    return f"▸ [{title}]({item.article.url}) · _{source}_"
 
 
 def format_scored_news_message(scored: list[ScoredArticle]) -> str:
@@ -54,8 +57,7 @@ def format_scored_news_message(scored: list[ScoredArticle]) -> str:
             items = [s for s in scored if s.article.url not in used_urls]
         else:
             items = [
-                s for s in scored
-                if s.category in match_set and s.article.url not in used_urls
+                s for s in scored if s.category in match_set and s.article.url not in used_urls
             ]
 
         items = items[:per_cat]

@@ -267,8 +267,17 @@ display_categories:
   - label: "💰 Kinh tế"
     match:
       - Kinh tế
+  - label: "📈 Chứng khoán"
+    match:
+      - Chứng khoán
   - label: "🌍 Quốc tế"
     match:
       - Quốc tế
+  - label: "⚽ Thể thao"
+    match:
+      - Thể thao
+  - label: "💻 Công nghệ"
+    match:
+      - Công nghệ
   - label: "📋 Tin khác"
     match: []

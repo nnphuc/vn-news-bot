@@ -19,8 +19,14 @@ from vn_news_bot.services.news import get_latest_news
 from vn_news_bot.services.weather import get_weather_digest, get_weather_for_city
 
 
+def _get_chat_ids(context: ContextTypes.DEFAULT_TYPE) -> set[int]:
+    ids: set[int] = (context.bot_data or {}).get("_chat_ids", set())
+    return ids
+
+
 async def send_news_update(context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not context.job or not context.job.chat_id:
+    chat_ids = _get_chat_ids(context)
+    if not chat_ids:
         return
 
     bot_data = context.bot_data or {}
@@ -28,16 +34,21 @@ async def send_news_update(context: ContextTypes.DEFAULT_TYPE) -> None:
     scored = await get_latest_news(newsapi_key=newsapi_key)
     message = format_scored_news_message(scored)
 
-    await context.bot.send_message(
-        chat_id=context.job.chat_id,
-        text=message,
-        parse_mode="Markdown",
-        disable_web_page_preview=True,
-    )
+    for chat_id in chat_ids:
+        try:
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=message,
+                parse_mode="Markdown",
+                disable_web_page_preview=True,
+            )
+        except Exception:
+            logger.warning("Failed to send news update to chat {}", chat_id)
 
 
 async def send_weather_digest(context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not context.job or not context.job.chat_id:
+    chat_ids = _get_chat_ids(context)
+    if not chat_ids:
         return
 
     bot_data = context.bot_data or {}
@@ -47,15 +58,20 @@ async def send_weather_digest(context: ContextTypes.DEFAULT_TYPE) -> None:
     reports = await get_weather_digest(cities, api_key)
     message = format_weather_message(reports)
 
-    await context.bot.send_message(
-        chat_id=context.job.chat_id,
-        text=message,
-        parse_mode="Markdown",
-    )
+    for chat_id in chat_ids:
+        try:
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=message,
+                parse_mode="Markdown",
+            )
+        except Exception:
+            logger.warning("Failed to send weather digest to chat {}", chat_id)
 
 
 async def send_weather_monitor(context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not context.job or not context.job.chat_id:
+    chat_ids = _get_chat_ids(context)
+    if not chat_ids:
         return
 
     bot_data = context.bot_data or {}
@@ -74,12 +90,16 @@ async def send_weather_monitor(context: ContextTypes.DEFAULT_TYPE) -> None:
         prev = prev_weather.get(city)
         if prev and _has_sudden_change(prev, report, temp_threshold, humidity_threshold):
             alert_msg = format_weather_alert(city, prev, report)
-            await context.bot.send_message(
-                chat_id=context.job.chat_id,
-                text=alert_msg,
-                parse_mode="Markdown",
-            )
-            logger.info("Weather alert sent for %s", city)
+            for chat_id in chat_ids:
+                try:
+                    await context.bot.send_message(
+                        chat_id=chat_id,
+                        text=alert_msg,
+                        parse_mode="Markdown",
+                    )
+                except Exception:
+                    logger.warning("Failed to send weather alert to chat {}", chat_id)
+            logger.info("Weather alert sent for {}", city)
 
         prev_weather[city] = report
 
@@ -104,9 +124,12 @@ async def send_disaster_check(context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     message = format_disaster_message(alerts)
-    await context.bot.send_message(
-        chat_id=context.job.chat_id,
-        text=message,
-        parse_mode="Markdown",
-        disable_web_page_preview=True,
-    )
+    try:
+        await context.bot.send_message(
+            chat_id=context.job.chat_id,
+            text=message,
+            parse_mode="Markdown",
+            disable_web_page_preview=True,
+        )
+    except Exception:
+        logger.warning("Failed to send disaster alert to chat {}", context.job.chat_id)

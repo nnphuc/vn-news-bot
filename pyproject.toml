@@ -43,6 +43,10 @@ module = ["feedparser", "feedparser.*"]
 ignore_missing_imports = true
 follow_untyped_imports = false
 
+[[tool.mypy.overrides]]
+module = ["vn_news_bot.main"]
+disable_error_code = ["type-arg"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]

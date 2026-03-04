@@ -1,13 +1,22 @@
 from __future__ import annotations
 
+import datetime as dt
 import logging
 import sys
+from zoneinfo import ZoneInfo
 
 from loguru import logger
 from telegram import BotCommand
 from telegram.ext import Application, ApplicationBuilder, CommandHandler
 
-from vn_news_bot.config import load_settings
+from vn_news_bot.config import (
+    get_news_schedule,
+    get_schedule_timezone,
+    get_weather_digest_hour,
+    get_weather_digest_minute,
+    get_weather_monitor_interval,
+    load_settings,
+)
 from vn_news_bot.handlers.commands import (
     disaster_command,
     economy_command,
@@ -25,6 +34,11 @@ from vn_news_bot.handlers.commands import (
     trending_command,
     unsubscribe_command,
     weather_command,
+)
+from vn_news_bot.services.scheduler import (
+    send_news_update,
+    send_weather_digest,
+    send_weather_monitor,
 )
 
 
@@ -53,28 +67,68 @@ def _setup_logging(log_level: str) -> None:
     logging.basicConfig(handlers=[_InterceptHandler()], level=0, force=True)
 
 
+def _schedule_jobs(app: Application) -> None:
+    job_queue = app.job_queue
+    if not job_queue:
+        logger.warning("Job queue not available, scheduled updates disabled")
+        return
+
+    tz = ZoneInfo(get_schedule_timezone())
+
+    # News updates at fixed times
+    for slot in get_news_schedule():
+        job_queue.run_daily(
+            send_news_update,
+            time=dt.time(hour=slot["hour"], minute=slot["minute"], tzinfo=tz),
+            name=f"news_{slot['hour']}:{slot['minute']:02d}",
+        )
+        logger.info("Scheduled news update at {}:{:02d}", slot["hour"], slot["minute"])
+
+    # Weather digest daily
+    digest_h = get_weather_digest_hour()
+    digest_m = get_weather_digest_minute()
+    job_queue.run_daily(
+        send_weather_digest,
+        time=dt.time(hour=digest_h, minute=digest_m, tzinfo=tz),
+        name="weather_digest",
+    )
+    logger.info("Scheduled weather digest at {}:{:02d}", digest_h, digest_m)
+
+    # Weather monitor repeating
+    monitor_interval = get_weather_monitor_interval()
+    job_queue.run_repeating(
+        send_weather_monitor,
+        interval=monitor_interval * 60,
+        first=60,
+        name="weather_monitor",
+    )
+    logger.info("Scheduled weather monitor every {} minutes", monitor_interval)
+
+
 def main() -> None:
     settings = load_settings()
     _setup_logging(settings.log_level)
 
     async def post_init(application: Application) -> None:
-        await application.bot.set_my_commands([
-            BotCommand("news", "Tin tức mới nhất"),
-            BotCommand("trending", "Tin nổi bật"),
-            BotCommand("thoisu", "Thời sự"),
-            BotCommand("kinhte", "Kinh tế"),
-            BotCommand("chungkhoan", "Chứng khoán"),
-            BotCommand("quocte", "Quốc tế"),
-            BotCommand("thethao", "Thể thao"),
-            BotCommand("congnghe", "Công nghệ"),
-            BotCommand("search", "Tìm tin theo từ khóa"),
-            BotCommand("weather", "Thời tiết"),
-            BotCommand("forecast", "Dự báo 7 ngày"),
-            BotCommand("disaster", "Cảnh báo thiên tai"),
-            BotCommand("subscribe", "Đăng ký cảnh báo"),
-            BotCommand("unsubscribe", "Hủy đăng ký"),
-            BotCommand("help", "Trợ giúp"),
-        ])
+        await application.bot.set_my_commands(
+            [
+                BotCommand("news", "Tin tức mới nhất"),
+                BotCommand("trending", "Tin nổi bật"),
+                BotCommand("thoisu", "Thời sự"),
+                BotCommand("kinhte", "Kinh tế"),
+                BotCommand("chungkhoan", "Chứng khoán"),
+                BotCommand("quocte", "Quốc tế"),
+                BotCommand("thethao", "Thể thao"),
+                BotCommand("congnghe", "Công nghệ"),
+                BotCommand("search", "Tìm tin theo từ khóa"),
+                BotCommand("weather", "Thời tiết"),
+                BotCommand("forecast", "Dự báo 7 ngày"),
+                BotCommand("disaster", "Cảnh báo thiên tai"),
+                BotCommand("subscribe", "Đăng ký cảnh báo"),
+                BotCommand("unsubscribe", "Hủy đăng ký"),
+                BotCommand("help", "Trợ giúp"),
+            ]
+        )
 
     app = ApplicationBuilder().token(settings.telegram_bot_token).post_init(post_init).build()
 
@@ -102,6 +156,8 @@ def main() -> None:
     ]
     for cmd, handler in handlers:
         app.add_handler(CommandHandler(cmd, handler))
+
+    _schedule_jobs(app)
 
     logger.info("Bot starting...")
     app.run_polling()

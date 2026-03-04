@@ -62,5 +62,11 @@ async def get_disaster_alerts() -> list[DisasterAlert]:
         if alert:
             alerts.append(alert)
 
-    alerts.sort(key=lambda a: (a.severity.value, a.published), reverse=True)
+    severity_rank = {
+        AlertSeverity.LOW: 1,
+        AlertSeverity.MEDIUM: 2,
+        AlertSeverity.HIGH: 3,
+        AlertSeverity.CRITICAL: 4,
+    }
+    alerts.sort(key=lambda a: (severity_rank.get(a.severity, 0), a.published), reverse=True)
     return alerts[: get_max_disaster_items()]

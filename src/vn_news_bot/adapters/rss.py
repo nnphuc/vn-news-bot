@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from time import mktime
 from typing import Any
@@ -19,9 +20,14 @@ def _parse_published(entry: Any) -> datetime:
     return datetime.now(tz=UTC)
 
 
+def _strip_html(text: str) -> str:
+    clean = re.sub(r"<[^>]+>", "", text)
+    return re.sub(r"\s+", " ", clean).strip()
+
+
 def _parse_summary(entry: Any) -> str:
     if hasattr(entry, "summary"):
-        return str(entry.summary)[:200]
+        return _strip_html(str(entry.summary))[:200]
     return ""
 
 

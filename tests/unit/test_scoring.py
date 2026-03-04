@@ -167,12 +167,8 @@ class TestScoreArticles:
     def test_trending_articles_flagged(self) -> None:
         now = datetime.now(UTC)
         articles = [
-            _make_article(
-                "Thủ tướng gặp Tổng thống Mỹ tại Hà Nội", "VnExpress", hours_ago=1
-            ),
-            _make_article(
-                "Thủ tướng gặp gỡ Tổng thống Mỹ tại Hà Nội", "Tuổi Trẻ", hours_ago=1
-            ),
+            _make_article("Thủ tướng gặp Tổng thống Mỹ tại Hà Nội", "VnExpress", hours_ago=1),
+            _make_article("Thủ tướng gặp gỡ Tổng thống Mỹ tại Hà Nội", "Tuổi Trẻ", hours_ago=1),
             _make_article("VN-Index giảm mạnh hôm nay", "VnEconomy", hours_ago=1),
         ]
         scored = score_articles(articles, now=now)
