@@ -1,0 +1,38 @@
+keywords:
+  - bão
+  - lũ
+  - lũ lụt
+  - lụt
+  - ngập
+  - sạt lở
+  - động đất
+  - sóng thần
+  - hạn hán
+  - cháy rừng
+  - thiên tai
+  - mưa lớn
+  - giông
+  - lốc
+  - lốc xoáy
+  - triều cường
+  - nước dâng
+  - sét đánh
+  - rét đậm
+  - nắng nóng
+  - storm
+  - flood
+  - earthquake
+  - tsunami
+  - typhoon
+
+critical_keywords:
+  - bão
+  - động đất
+  - sóng thần
+  - lũ lụt
+  - typhoon
+  - earthquake
+  - tsunami
+
+limits:
+  max_disaster_items: 5

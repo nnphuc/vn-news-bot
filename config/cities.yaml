@@ -1,0 +1,86 @@
+cities:
+  Hanoi:
+    lat: 21.0285
+    lon: 105.8542
+    slug: ha-noi
+    accuweather_id: "353412"
+  Ho Chi Minh City:
+    lat: 10.8231
+    lon: 106.6297
+    slug: tp-ho-chi-minh
+    accuweather_id: "353981"
+  Da Nang:
+    lat: 16.0544
+    lon: 108.2022
+    slug: da-nang
+    accuweather_id: "352771"
+  Hai Phong:
+    lat: 20.8449
+    lon: 106.6881
+    slug: hai-phong
+    accuweather_id: "353344"
+  Can Tho:
+    lat: 10.0452
+    lon: 105.7469
+    slug: can-tho
+    accuweather_id: "352662"
+  Hue:
+    lat: 16.4637
+    lon: 107.5909
+    slug: thua-thien-hue
+    accuweather_id: "353440"
+  Nha Trang:
+    lat: 12.2388
+    lon: 109.1967
+    slug: khanh-hoa
+    accuweather_id: "353681"
+  Da Lat:
+    lat: 11.9404
+    lon: 108.4583
+    slug: lam-dong
+    accuweather_id: "352741"
+  Vung Tau:
+    lat: 10.346
+    lon: 107.0843
+    slug: ba-ria-vung-tau
+    accuweather_id: "356187"
+  Quy Nhon:
+    lat: 13.776
+    lon: 109.2237
+    slug: binh-dinh
+    accuweather_id: "354077"
+  Vinh:
+    lat: 18.6796
+    lon: 105.6813
+    slug: nghe-an
+    accuweather_id: "353863"
+
+aliases:
+  hà nội: Hanoi
+  ha noi: Hanoi
+  hn: Hanoi
+  hcm: Ho Chi Minh City
+  ho chi minh: Ho Chi Minh City
+  hồ chí minh: Ho Chi Minh City
+  tp hcm: Ho Chi Minh City
+  saigon: Ho Chi Minh City
+  sài gòn: Ho Chi Minh City
+  đà nẵng: Da Nang
+  da nang: Da Nang
+  hải phòng: Hai Phong
+  hai phong: Hai Phong
+  cần thơ: Can Tho
+  can tho: Can Tho
+  huế: Hue
+  hue: Hue
+  nha trang: Nha Trang
+  đà lạt: Da Lat
+  da lat: Da Lat
+  dalat: Da Lat
+  vũng tàu: Vung Tau
+  vung tau: Vung Tau
+  quy nhơn: Quy Nhon
+  quy nhon: Quy Nhon
+  vinh: Vinh
+  nghệ an: Vinh
+  nghe an: Vinh

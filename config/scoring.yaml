@@ -1,0 +1,258 @@
+weights:
+  recency: 0.30
+  source_trust: 0.15
+  trending: 0.35
+  keyword_boost: 0.20
+
+recency:
+  half_life_hours: 6
+  decay_constant: 0.693
+
+# Source trust based on monthly viewer statistics (SimilarWeb 2025):
+# VnExpress ~180M, Tuổi Trẻ ~95M, Thanh Niên ~75M, Dân Trí ~65M, 24h ~55M
+source_trust:
+  VnExpress: 1.0
+  VnExpress Thời sự: 1.0
+  Tuổi Trẻ: 0.85
+  Thanh Niên: 0.75
+  Dân Trí: 0.65
+  VnEconomy: 0.60
+  24h: 0.55
+  NewsAPI: 0.50
+  default: 0.40
+
+trending:
+  similarity_threshold: 0.4
+  min_sources: 2
+  max_source_divisor: 3
+
+categories:
+  - name: Thời sự
+    emoji: "📌"
+    boost: 0.8
+    keywords:
+      - chính phủ
+      - thủ tướng
+      - chủ tịch nước
+      - quốc hội
+      - bộ trưởng
+      - ngoại giao
+      - đại sứ
+      - hiệp định
+      - chính sách
+      - an ninh
+      - quốc phòng
+      - biển đông
+      - lãnh thổ
+      - chủ quyền
+      - đảng
+      - trung ương
+
+  - name: Kinh tế
+    emoji: "💰"
+    boost: 0.6
+    keywords:
+      - kinh tế
+      - tài chính
+      - ngân hàng
+      - chứng khoán
+      - vn-index
+      - lãi suất
+      - tỷ giá
+      - xuất khẩu
+      - nhập khẩu
+      - gdp
+      - đầu tư
+      - bất động sản
+      - doanh nghiệp
+      - cổ phiếu
+      - thị trường
+
+  - name: Quốc tế
+    emoji: "🌍"
+    boost: 0.6
+    keywords:
+      - quốc tế
+      - thế giới
+      - mỹ
+      - trung quốc
+      - nga
+      - châu âu
+      - liên hợp quốc
+      - nato
+      - g7
+      - asean
+      - tổng thống mỹ
+      - ngoại giao
+      - đại sứ quán
+      - toàn cầu
+      - chiến tranh
+      - xung đột
+      - hòa bình
+
+  - name: Thể thao
+    emoji: "⚽"
+    boost: 0.4
+    keywords:
+      - bóng đá
+      - v-league
+      - đội tuyển
+      - hlv
+      - cầu thủ
+      - world cup
+      - sea games
+      - olympic
+      - tennis
+      - giải đấu
+      - thể thao
+      - u23
+      - aff cup
+
+  - name: Công nghệ
+    emoji: "💻"
+    boost: 0.5
+    keywords:
+      - công nghệ
+      - ai
+      - trí tuệ nhân tạo
+      - smartphone
+      - internet
+      - phần mềm
+      - startup
+      - chuyển đổi số
+      - bảo mật
+      - dữ liệu
+      - robot
+      - chip
+      - bán dẫn
+
+  - name: Giải trí
+    emoji: "🎬"
+    boost: 0.3
+    keywords:
+      - giải trí
+      - phim
+      - ca sĩ
+      - nghệ sĩ
+      - gameshow
+      - âm nhạc
+      - điện ảnh
+      - truyền hình
+      - sao việt
+      - mạng xã hội
+
+  - name: Giáo dục
+    emoji: "📚"
+    boost: 0.5
+    keywords:
+      - giáo dục
+      - đại học
+      - tuyển sinh
+      - thi tốt nghiệp
+      - học sinh
+      - sinh viên
+      - trường học
+      - điểm chuẩn
+      - học phí
+
+  - name: Sức khỏe
+    emoji: "🏥"
+    boost: 0.5
+    keywords:
+      - sức khỏe
+      - y tế
+      - bệnh viện
+      - dịch bệnh
+      - vaccine
+      - covid
+      - bác sĩ
+      - thuốc
+      - ung thư
+      - điều trị
+
+  - name: Pháp luật
+    emoji: "⚖️"
+    boost: 0.6
+    keywords:
+      - pháp luật
+      - tòa án
+      - xét xử
+      - bắt giữ
+      - tham nhũng
+      - lừa đảo
+      - hình sự
+      - công an
+      - viện kiểm sát
+      - khởi tố
+
+stopwords:
+  - và
+  - của
+  - các
+  - là
+  - có
+  - được
+  - cho
+  - với
+  - trong
+  - không
+  - này
+  - một
+  - những
+  - đã
+  - từ
+  - theo
+  - về
+  - đến
+  - cũng
+  - như
+  - hay
+  - để
+  - khi
+  - ra
+  - tại
+  - do
+  - bị
+  - lại
+  - vào
+  - năm
+  - người
+  - trên
+  - sau
+  - sẽ
+  - đang
+  - ngày
+  - còn
+  - nhiều
+  - rất
+  - mới
+  - vì
+  - nếu
+  - thì
+  - đây
+  - đó
+  - nào
+  - hơn
+  - nhưng
+  - phải
+  - tới
+  - giờ
+
+limits:
+  max_trending_items: 5
+  max_other_items: 10
+  per_category: 5
+
+display_categories:
+  - label: "📌 Thời sự"
+    match:
+      - Thời sự
+      - Pháp luật
+  - label: "💰 Kinh tế"
+    match:
+      - Kinh tế
+  - label: "🌍 Quốc tế"
+    match:
+      - Quốc tế
+  - label: "📋 Tin khác"
+    match: []

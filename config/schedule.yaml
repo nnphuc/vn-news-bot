@@ -1,0 +1,20 @@
+timezone: "Asia/Ho_Chi_Minh"
+
+news:
+  schedule:
+    - hour: 8
+      minute: 30
+    - hour: 12
+      minute: 0
+    - hour: 20
+      minute: 0
+
+weather:
+  digest_hour: 7
+  digest_minute: 0
+  monitor_interval_minutes: 30
+  alert_temp_change: 5.0
+  alert_humidity_change: 25
+
+disaster:
+  check_interval_minutes: 15

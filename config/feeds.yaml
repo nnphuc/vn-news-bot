@@ -1,0 +1,14 @@
+rss:
+  VnExpress: https://vnexpress.net/rss/tin-moi-nhat.rss
+  VnExpress Thời sự: https://vnexpress.net/rss/thoi-su.rss
+  Tuổi Trẻ: https://tuoitre.vn/rss/tin-moi-nhat.rss
+  Thanh Niên: https://thanhnien.vn/rss/home.rss
+  Dân Trí: https://dantri.com.vn/rss/home.rss
+  VnEconomy: https://vneconomy.vn/rss.rss
+  24h: https://www.24h.com.vn/upload/rss/trangchu24h.rss
+
+newsapi:
+  base_url: https://newsapi.org/v2
+
+limits:
+  max_news_items: 10
