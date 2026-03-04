@@ -145,6 +145,23 @@ def format_single_weather(
     return "\n".join(lines)
 
 
+def format_forecast_message(
+    city: str,
+    forecast: list[DailyForecast],
+) -> str:
+    lines = [f"📅 *Dự báo 7 ngày - {city}*", ""]
+    for day in forecast:
+        de = _desc_emoji(day.description)
+        tip = get_forecast_suggestion(day)
+        tip_str = f"  _{tip}_" if tip else ""
+        lines.append(
+            f"{de} *{day.day_label}*  "
+            f"{day.temp_min:.0f}° → {day.temp_max:.0f}°  "
+            f"{day.description}{tip_str}"
+        )
+    return "\n".join(lines)
+
+
 def format_weather_alert(
     city: str,
     prev: WeatherReport,

@@ -124,7 +124,7 @@ class TestClassifyArticle:
         assert emoji == "📌"
 
     def test_economy(self) -> None:
-        name, emoji, _boost = _classify_article("VN-Index vượt mốc 1400 điểm chứng khoán")
+        name, emoji, _boost = _classify_article("Ngân hàng tăng lãi suất huy động")
         assert name == "Kinh tế"
         assert emoji == "💰"
 
@@ -196,7 +196,7 @@ class TestScoreArticles:
     def test_categories_assigned(self) -> None:
         now = datetime.now(UTC)
         articles = [
-            _make_article("Chứng khoán VN-Index tăng điểm", "VnEconomy", hours_ago=1),
+            _make_article("GDP tăng trưởng xuất khẩu mạnh", "VnEconomy", hours_ago=1),
         ]
         scored = score_articles(articles, now=now)
         assert scored[0].category == "Kinh tế"
