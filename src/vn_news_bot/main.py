@@ -4,13 +4,15 @@ import logging
 import sys
 
 from loguru import logger
-from telegram.ext import ApplicationBuilder, CommandHandler
+from telegram import BotCommand
+from telegram.ext import Application, ApplicationBuilder, CommandHandler
 
 from vn_news_bot.config import load_settings
 from vn_news_bot.handlers.commands import (
     disaster_command,
     help_command,
     news_command,
+    sports_command,
     start_command,
     subscribe_command,
     unsubscribe_command,
@@ -47,19 +49,35 @@ def main() -> None:
     settings = load_settings()
     _setup_logging(settings.log_level)
 
-    app = ApplicationBuilder().token(settings.telegram_bot_token).build()
+    async def post_init(application: Application) -> None:
+        await application.bot.set_my_commands([
+            BotCommand("news", "Tin tức mới nhất"),
+            BotCommand("thethao", "Tin thể thao"),
+            BotCommand("weather", "Thời tiết"),
+            BotCommand("disaster", "Cảnh báo thiên tai"),
+            BotCommand("subscribe", "Đăng ký cảnh báo thiên tai"),
+            BotCommand("unsubscribe", "Hủy đăng ký cảnh báo"),
+            BotCommand("help", "Trợ giúp"),
+        ])
+
+    app = ApplicationBuilder().token(settings.telegram_bot_token).post_init(post_init).build()
 
     app.bot_data["openweather_api_key"] = settings.openweather_api_key
     app.bot_data["newsapi_key"] = settings.newsapi_key
     app.bot_data["default_cities"] = settings.default_cities
 
-    app.add_handler(CommandHandler("start", start_command))
-    app.add_handler(CommandHandler("news", news_command))
-    app.add_handler(CommandHandler("weather", weather_command))
-    app.add_handler(CommandHandler("disaster", disaster_command))
-    app.add_handler(CommandHandler("subscribe", subscribe_command))
-    app.add_handler(CommandHandler("unsubscribe", unsubscribe_command))
-    app.add_handler(CommandHandler("help", help_command))
+    handlers = [
+        ("start", start_command),
+        ("news", news_command),
+        ("thethao", sports_command),
+        ("weather", weather_command),
+        ("disaster", disaster_command),
+        ("subscribe", subscribe_command),
+        ("unsubscribe", unsubscribe_command),
+        ("help", help_command),
+    ]
+    for cmd, handler in handlers:
+        app.add_handler(CommandHandler(cmd, handler))
 
     logger.info("Bot starting...")
     app.run_polling()

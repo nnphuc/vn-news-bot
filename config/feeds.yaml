@@ -6,6 +6,8 @@ rss:
   Dân Trí: https://dantri.com.vn/rss/home.rss
   VnEconomy: https://vneconomy.vn/rss.rss
   24h: https://www.24h.com.vn/upload/rss/trangchu24h.rss
+  VnExpress Thể thao: https://vnexpress.net/rss/the-thao.rss
+  Tuổi Trẻ Thể thao: https://tuoitre.vn/rss/the-thao.rss
 
 newsapi:
   base_url: https://newsapi.org/v2

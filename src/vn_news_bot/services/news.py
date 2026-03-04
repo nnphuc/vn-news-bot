@@ -21,7 +21,9 @@ def _deduplicate(articles: list[NewsArticle]) -> list[NewsArticle]:
     return unique
 
 
-async def get_latest_news(newsapi_key: str = "") -> list[ScoredArticle]:
+async def get_latest_news(
+    newsapi_key: str = "", max_items: int | None = None
+) -> list[ScoredArticle]:
     rss_feeds = get_rss_feeds()
     tasks = [fetch_rss_feed(url, name) for name, url in rss_feeds.items()]
 
@@ -39,4 +41,5 @@ async def get_latest_news(newsapi_key: str = "") -> list[ScoredArticle]:
 
     all_articles = _deduplicate(all_articles)
 
-    return score_articles(all_articles, max_items=get_max_news_items())
+    limit = max_items if max_items is not None else get_max_news_items()
+    return score_articles(all_articles, max_items=limit)

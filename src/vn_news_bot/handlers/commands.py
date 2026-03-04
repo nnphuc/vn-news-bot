@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import datetime as dt
-import zoneinfo
-
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -15,20 +12,10 @@ from vn_news_bot.config import (
     get_cities,
     get_city_aliases,
     get_disaster_check_interval,
-    get_news_schedule,
-    get_schedule_timezone,
-    get_weather_digest_hour,
-    get_weather_digest_minute,
-    get_weather_monitor_interval,
 )
 from vn_news_bot.services.disaster import get_disaster_alerts
 from vn_news_bot.services.news import get_latest_news
-from vn_news_bot.services.scheduler import (
-    send_disaster_check,
-    send_news_update,
-    send_weather_digest,
-    send_weather_monitor,
-)
+from vn_news_bot.services.scheduler import send_disaster_check
 from vn_news_bot.services.weather import get_forecast_for_city, get_weather_for_city
 
 
@@ -41,8 +28,8 @@ def _build_welcome_message() -> str:
         "/news - Tin tức mới nhất\n"
         "/weather <thành phố> - Thời tiết (VD: /weather Hanoi)\n"
         "/disaster - Cảnh báo thiên tai\n"
-        "/subscribe - Đăng ký nhận tin tự động\n"
-        "/unsubscribe - Hủy đăng ký\n"
+        "/subscribe - Đăng ký cảnh báo thiên tai\n"
+        "/unsubscribe - Hủy đăng ký cảnh báo\n"
         "/help - Trợ giúp\n\n"
         f"*Thành phố hỗ trợ:* {', '.join(cities.keys())}"
     )
@@ -70,6 +57,21 @@ async def news_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     scored = await get_latest_news(newsapi_key=newsapi_key)
     message = format_scored_news_message(scored)
+    await update.effective_message.reply_text(
+        message, parse_mode="Markdown", disable_web_page_preview=True
+    )
+
+
+async def sports_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not update.effective_message:
+        return
+
+    bot_data = context.bot_data or {}
+    newsapi_key = bot_data.get("newsapi_key", "")
+
+    scored = await get_latest_news(newsapi_key=newsapi_key, max_items=200)
+    sports = [s for s in scored if s.category == "Thể thao"][:10]
+    message = format_scored_news_message(sports) if sports else "Không có tin thể thao."
     await update.effective_message.reply_text(
         message, parse_mode="Markdown", disable_web_page_preview=True
     )
@@ -120,40 +122,12 @@ async def subscribe_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         await update.effective_message.reply_text("Scheduler không khả dụng.")
         return
 
-    existing_jobs = job_queue.get_jobs_by_name(f"news_0_{chat_id}")
+    existing_jobs = job_queue.get_jobs_by_name(f"disaster_{chat_id}")
     if existing_jobs:
-        await update.effective_message.reply_text("Bạn đã đăng ký nhận tin rồi!")
+        await update.effective_message.reply_text("Bạn đã đăng ký nhận cảnh báo rồi!")
         return
 
-    tz = zoneinfo.ZoneInfo(get_schedule_timezone())
-    news_schedule = get_news_schedule()
-    weather_hour = get_weather_digest_hour()
-    weather_minute = get_weather_digest_minute()
     disaster_interval = get_disaster_check_interval()
-
-    for i, slot in enumerate(news_schedule):
-        job_queue.run_daily(
-            send_news_update,
-            time=dt.time(hour=slot["hour"], minute=slot["minute"], tzinfo=tz),
-            chat_id=chat_id,
-            name=f"news_{i}_{chat_id}",
-        )
-
-    job_queue.run_daily(
-        send_weather_digest,
-        time=dt.time(hour=weather_hour, minute=weather_minute, tzinfo=tz),
-        chat_id=chat_id,
-        name=f"weather_{chat_id}",
-    )
-
-    weather_monitor_interval = get_weather_monitor_interval()
-    job_queue.run_repeating(
-        send_weather_monitor,
-        interval=weather_monitor_interval * 60,
-        first=60,
-        chat_id=chat_id,
-        name=f"weather_monitor_{chat_id}",
-    )
 
     job_queue.run_repeating(
         send_disaster_check,
@@ -163,13 +137,9 @@ async def subscribe_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         name=f"disaster_{chat_id}",
     )
 
-    schedule_text = ", ".join(f"{s['hour']}:{s['minute']:02d}" for s in news_schedule)
     await update.effective_message.reply_text(
-        "✅ Đã đăng ký nhận tin tự động!\n\n"
-        f"📰 Tin tức: {schedule_text} (ICT)\n"
-        f"🌤 Thời tiết: hàng ngày lúc {weather_hour}:{weather_minute:02d} (ICT)\n"
-        f"⚡ Cảnh báo thời tiết: mỗi {weather_monitor_interval} phút\n"
-        f"⚠️ Thiên tai: kiểm tra mỗi {disaster_interval} phút"
+        "✅ Đã đăng ký nhận cảnh báo thiên tai!\n\n"
+        f"⚠️ Kiểm tra mỗi {disaster_interval} phút"
     )
 
 
@@ -181,11 +151,12 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     message = (
         "*Danh sách lệnh:*\n\n"
         "/news - Tin tức nổi bật & mới nhất\n"
+        "/thethao - Tin thể thao\n"
         "/weather - Thời tiết (mặc định: Hanoi)\n"
         "/weather <city> - Thời tiết thành phố\n"
         "/disaster - Cảnh báo thiên tai\n"
-        "/subscribe - Đăng ký nhận tin tự động\n"
-        "/unsubscribe - Hủy đăng ký\n"
+        "/subscribe - Đăng ký cảnh báo thiên tai\n"
+        "/unsubscribe - Hủy đăng ký cảnh báo\n"
         "/help - Hiển thị trợ giúp\n\n"
         f"*Thành phố hỗ trợ:* {', '.join(cities.keys())}"
     )
@@ -202,17 +173,11 @@ async def unsubscribe_command(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
 
     removed = 0
-    news_schedule = get_news_schedule()
-    for i in range(len(news_schedule)):
-        for job in job_queue.get_jobs_by_name(f"news_{i}_{chat_id}"):
-            job.schedule_removal()
-            removed += 1
-    for prefix in ("weather_", "weather_monitor_", "disaster_"):
-        for job in job_queue.get_jobs_by_name(f"{prefix}{chat_id}"):
-            job.schedule_removal()
-            removed += 1
+    for job in job_queue.get_jobs_by_name(f"disaster_{chat_id}"):
+        job.schedule_removal()
+        removed += 1
 
     if removed:
-        await update.effective_message.reply_text("❌ Đã hủy đăng ký nhận tin tự động.")
+        await update.effective_message.reply_text("❌ Đã hủy đăng ký nhận cảnh báo thiên tai.")
     else:
-        await update.effective_message.reply_text("Bạn chưa đăng ký nhận tin.")
+        await update.effective_message.reply_text("Bạn chưa đăng ký nhận cảnh báo.")

@@ -13,7 +13,9 @@ recency:
 source_trust:
   VnExpress: 1.0
   VnExpress Thời sự: 1.0
+  VnExpress Thể thao: 1.0
   Tuổi Trẻ: 0.85
+  Tuổi Trẻ Thể thao: 0.85
   Thanh Niên: 0.75
   Dân Trí: 0.65
   VnEconomy: 0.60
