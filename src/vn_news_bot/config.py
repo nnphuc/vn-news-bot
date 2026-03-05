@@ -150,3 +150,7 @@ def get_display_categories() -> list[dict[str, Any]]:
 
 def get_scoring_limits() -> dict[str, int]:
     return cast(dict[str, int], load_scoring_config()["limits"])
+
+
+def get_rss_category_map() -> dict[str, str]:
+    return cast(dict[str, str], load_scoring_config().get("rss_category_map", {}))

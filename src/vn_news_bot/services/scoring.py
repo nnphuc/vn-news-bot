@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from vn_news_bot.config import (
     get_categories_config,
     get_recency_config,
+    get_rss_category_map,
     get_scoring_limits,
     get_scoring_weights,
     get_source_trust,
@@ -103,13 +104,38 @@ def _compute_source_trust(source: str) -> float:
     return trust_map.get(source, trust_map.get("default", 0.5))
 
 
+def _strip_accents(text: str) -> str:
+    text = text.replace("Đ", "D").replace("đ", "d")
+    nfkd = unicodedata.normalize("NFKD", text)
+    return re.sub(r"[\u0300-\u036f]", "", nfkd).lower()
+
+
 def _classify_article(title: str) -> tuple[str, str, float]:
-    lower_title = title.lower()
+    lower_title = _normalize_title(title)
+    stripped_title = _strip_accents(lower_title)
+
+    best: tuple[str, str, float] = ("Khác", "📋", 0.0)
+    best_score = 0
+
     for cat in get_categories_config():
+        match_count = 0
         for keyword in cat["keywords"]:
-            if keyword in lower_title:
-                return cat["name"], cat["emoji"], cat["boost"]
-    return "Khác", "📋", 0.0
+            if len(keyword) <= 3:
+                pattern = r"\b" + re.escape(keyword) + r"\b"
+                if re.search(pattern, lower_title) or re.search(pattern, stripped_title):
+                    match_count += 1
+            else:
+                stripped_keyword = _strip_accents(keyword)
+                if keyword in lower_title or stripped_keyword in stripped_title:
+                    match_count += 1
+
+        if match_count > best_score or (
+            match_count == best_score and match_count > 0 and cat["boost"] > best[2]
+        ):
+            best = (cat["name"], cat["emoji"], cat["boost"])
+            best_score = match_count
+
+    return best
 
 
 def _classify_with_fallback(article: NewsArticle) -> tuple[str, str, float]:
@@ -117,6 +143,12 @@ def _classify_with_fallback(article: NewsArticle) -> tuple[str, str, float]:
     if name != "Khác":
         return name, emoji, boost
     if article.category:
+        rss_map = get_rss_category_map()
+        mapped_name = rss_map.get(article.category.lower())
+        if mapped_name:
+            for cat in get_categories_config():
+                if cat["name"] == mapped_name:
+                    return cat["name"], cat["emoji"], cat["boost"]
         for cat in get_categories_config():
             if cat["name"].lower() in article.category.lower():
                 return cat["name"], cat["emoji"], cat["boost"]

@@ -5,9 +5,11 @@ from datetime import UTC, datetime, timedelta
 from vn_news_bot.domain.models import NewsArticle, ScoreBreakdown, ScoredArticle
 from vn_news_bot.services.scoring import (
     _classify_article,
+    _classify_with_fallback,
     _find_clusters,
     _jaccard_similarity,
     _normalize_title,
+    _strip_accents,
     _tokenize,
     score_articles,
 )
@@ -117,6 +119,17 @@ class TestFindClusters:
         assert len(clusters[0]) == 3
 
 
+class TestStripAccents:
+    def test_removes_vietnamese_accents(self) -> None:
+        assert _strip_accents("Việt Nam") == "viet nam"
+
+    def test_handles_d_stroke(self) -> None:
+        assert _strip_accents("Đà Nẵng") == "da nang"
+
+    def test_already_unaccented(self) -> None:
+        assert _strip_accents("hello world") == "hello world"
+
+
 class TestClassifyArticle:
     def test_politics(self) -> None:
         name, emoji, _boost = _classify_article("Thủ tướng họp bàn chính sách mới")
@@ -138,6 +151,34 @@ class TestClassifyArticle:
         assert name == "Khác"
         assert emoji == "📋"
         assert boost == 0.0
+
+    def test_multi_keyword_wins(self) -> None:
+        """Article matching more keywords in one category should pick that category."""
+        name, _emoji, _boost = _classify_article("Ngân hàng tăng lãi suất, tỷ giá biến động mạnh")
+        assert name == "Kinh tế"
+
+    def test_accent_insensitive(self) -> None:
+        """Should classify even when title has no Vietnamese accents."""
+        name, _emoji, _boost = _classify_article("Thu tuong hop ban chinh sach moi")
+        assert name == "Thời sự"
+
+
+class TestClassifyWithFallback:
+    def test_rss_category_map_fallback(self) -> None:
+        article = _make_article("Tin tức ngắn gọn", category="the-thao")
+        name, emoji, _boost = _classify_with_fallback(article)
+        assert name == "Thể thao"
+        assert emoji == "⚽"
+
+    def test_rss_category_map_vietnamese(self) -> None:
+        article = _make_article("Tin mới nhất", category="kinh doanh")
+        name, _emoji, _boost = _classify_with_fallback(article)
+        assert name == "Kinh tế"
+
+    def test_title_classification_takes_priority(self) -> None:
+        article = _make_article("Ngân hàng tăng lãi suất mạnh", category="the-thao")
+        name, _emoji, _boost = _classify_with_fallback(article)
+        assert name == "Kinh tế"
 
 
 class TestScoreArticles:

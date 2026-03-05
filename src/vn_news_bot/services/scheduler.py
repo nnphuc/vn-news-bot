@@ -123,7 +123,13 @@ async def send_disaster_check(context: ContextTypes.DEFAULT_TYPE) -> None:
     if not alerts:
         return
 
-    message = format_disaster_message(alerts)
+    bot_data = context.bot_data or {}
+    sent_urls: set[str] = bot_data.setdefault("_sent_disaster_urls", set())
+    new_alerts = [a for a in alerts if a.url not in sent_urls]
+    if not new_alerts:
+        return
+
+    message = format_disaster_message(new_alerts)
     try:
         await context.bot.send_message(
             chat_id=context.job.chat_id,
@@ -131,5 +137,9 @@ async def send_disaster_check(context: ContextTypes.DEFAULT_TYPE) -> None:
             parse_mode="Markdown",
             disable_web_page_preview=True,
         )
+        sent_urls.update(a.url for a in new_alerts)
+        # Keep only last 500 URLs to prevent unbounded growth
+        if len(sent_urls) > 500:
+            bot_data["_sent_disaster_urls"] = set(list(sent_urls)[-300:])
     except Exception:
         logger.warning("Failed to send disaster alert to chat {}", context.job.chat_id)

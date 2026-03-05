@@ -28,6 +28,28 @@ trending:
   min_sources: 2
   max_source_divisor: 3
 
+rss_category_map:
+  "thời sự": "Thời sự"
+  "thoi-su": "Thời sự"
+  "kinh doanh": "Kinh tế"
+  "kinh-doanh": "Kinh tế"
+  "the-thao": "Thể thao"
+  "thể thao": "Thể thao"
+  "công nghệ": "Công nghệ"
+  "cong-nghe": "Công nghệ"
+  "giải trí": "Giải trí"
+  "giai-tri": "Giải trí"
+  "giáo dục": "Giáo dục"
+  "giao-duc": "Giáo dục"
+  "sức khỏe": "Sức khỏe"
+  "suc-khoe": "Sức khỏe"
+  "pháp luật": "Pháp luật"
+  "phap-luat": "Pháp luật"
+  "thế giới": "Quốc tế"
+  "the-gioi": "Quốc tế"
+  "chứng khoán": "Chứng khoán"
+  "chung-khoan": "Chứng khoán"
+
 categories:
   - name: Thời sự
     emoji: "📌"
@@ -49,6 +71,15 @@ categories:
       - chủ quyền
       - đảng
       - trung ương
+      - thành phố
+      - tỉnh
+      - ủy ban
+      - phó thủ tướng
+      - luật
+      - nghị định
+      - quyết định
+      - hội nghị
+      - đại hội
 
   - name: Chứng khoán
     emoji: "📈"
@@ -56,6 +87,7 @@ categories:
     keywords:
       - chứng khoán
       - vn-index
+      - vnindex
       - hnx
       - upcom
       - cổ phiếu
@@ -66,6 +98,12 @@ categories:
       - bluechip
       - margin
       - phiên giao dịch
+      - hnx-index
+      - etf
+      - quỹ đầu tư
+      - lệnh mua
+      - lệnh bán
+      - chốt lời
 
   - name: Kinh tế
     emoji: "💰"
@@ -83,6 +121,15 @@ categories:
       - bất động sản
       - doanh nghiệp
       - thị trường
+      - thuế
+      - lạm phát
+      - thương mại
+      - vốn
+      - ngân sách
+      - phá sản
+      - sản xuất
+      - công nghiệp
+      - nông nghiệp
 
   - name: Quốc tế
     emoji: "🌍"
@@ -90,21 +137,26 @@ categories:
     keywords:
       - quốc tế
       - thế giới
-      - mỹ
       - trung quốc
-      - nga
       - châu âu
       - liên hợp quốc
       - nato
-      - g7
       - asean
       - tổng thống mỹ
-      - ngoại giao
       - đại sứ quán
       - toàn cầu
       - chiến tranh
       - xung đột
       - hòa bình
+      - ukraine
+      - hàn quốc
+      - nhật bản
+      - israel
+      - châu á
+      - châu phi
+      - bầu cử
+      - tổng thống
+      - thượng đỉnh
 
   - name: Thể thao
     emoji: "⚽"
@@ -123,13 +175,21 @@ categories:
       - thể thao
       - u23
       - aff cup
+      - ngoại hạng anh
+      - la liga
+      - champions league
+      - giải ngoại hạng
+      - huy chương
+      - vô địch
+      - bán kết
+      - chung kết
+      - trọng tài
 
   - name: Công nghệ
     emoji: "💻"
     boost: 0.5
     keywords:
       - công nghệ
-      - ai
       - trí tuệ nhân tạo
       - smartphone
       - internet
@@ -141,6 +201,16 @@ categories:
       - robot
       - chip
       - bán dẫn
+      - apple
+      - google
+      - microsoft
+      - samsung
+      - facebook
+      - meta
+      - chatgpt
+      - blockchain
+      - fintech
+      - điện thoại
 
   - name: Giải trí
     emoji: "🎬"
@@ -156,6 +226,15 @@ categories:
       - truyền hình
       - sao việt
       - mạng xã hội
+      - vpop
+      - kpop
+      - diễn viên
+      - đạo diễn
+      - phim việt
+      - hot girl
+      - tiktoker
+      - youtuber
+      - scandal
 
   - name: Giáo dục
     emoji: "📚"
@@ -170,6 +249,14 @@ categories:
       - trường học
       - điểm chuẩn
       - học phí
+      - thpt
+      - thcs
+      - tiểu học
+      - giáo viên
+      - bộ giáo dục
+      - nghiên cứu
+      - tiến sĩ
+      - thạc sĩ
 
   - name: Sức khỏe
     emoji: "🏥"
@@ -185,6 +272,13 @@ categories:
       - thuốc
       - ung thư
       - điều trị
+      - dinh dưỡng
+      - thực phẩm
+      - tập thể dục
+      - bảo hiểm y tế
+      - phẫu thuật
+      - triệu chứng
+      - cấp cứu
 
   - name: Pháp luật
     emoji: "⚖️"
@@ -200,6 +294,14 @@ categories:
       - công an
       - viện kiểm sát
       - khởi tố
+      - truy nã
+      - ma túy
+      - giết người
+      - tai nạn
+      - cháy
+      - trộm cắp
+      - phạt
+      - vi phạm
 
 stopwords:
   - và
