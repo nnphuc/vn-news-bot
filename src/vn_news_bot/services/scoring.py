@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import functools
 import math
 import re
 import unicodedata
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from vn_news_bot.config import (
@@ -20,6 +22,7 @@ from vn_news_bot.domain.models import (
     ScoreBreakdown,
     ScoredArticle,
 )
+from vn_news_bot.utils.text import strip_accents
 
 
 def _normalize_title(title: str) -> str:
@@ -104,35 +107,65 @@ def _compute_source_trust(source: str) -> float:
     return trust_map.get(source, trust_map.get("default", 0.5))
 
 
-def _strip_accents(text: str) -> str:
-    text = text.replace("Đ", "D").replace("đ", "d")
-    nfkd = unicodedata.normalize("NFKD", text)
-    return re.sub(r"[\u0300-\u036f]", "", nfkd).lower()
+@dataclass(frozen=True)
+class _CategoryMatcher:
+    name: str
+    emoji: str
+    boost: float
+    exact_keywords: list[tuple[str, str]]  # (keyword, stripped_keyword)
+    regex_patterns: list[tuple[re.Pattern[str], re.Pattern[str]]]  # (accented, stripped)
+
+
+@functools.cache
+def _build_category_matchers() -> tuple[_CategoryMatcher, ...]:
+    """Pre-compile keyword patterns and strip accents once at config load."""
+    matchers: list[_CategoryMatcher] = []
+    for cat in get_categories_config():
+        exact: list[tuple[str, str]] = []
+        regex: list[tuple[re.Pattern[str], re.Pattern[str]]] = []
+        for kw in cat["keywords"]:
+            stripped_kw = strip_accents(kw)
+            if len(kw) <= 3:
+                regex.append(
+                    (
+                        re.compile(r"\b" + re.escape(kw) + r"\b"),
+                        re.compile(r"\b" + re.escape(stripped_kw) + r"\b"),
+                    )
+                )
+            else:
+                exact.append((kw, stripped_kw))
+        matchers.append(
+            _CategoryMatcher(
+                name=cat["name"],
+                emoji=cat["emoji"],
+                boost=cat["boost"],
+                exact_keywords=exact,
+                regex_patterns=regex,
+            )
+        )
+    return tuple(matchers)
 
 
 def _classify_article(title: str) -> tuple[str, str, float]:
     lower_title = _normalize_title(title)
-    stripped_title = _strip_accents(lower_title)
+    stripped_title = strip_accents(lower_title)
 
     best: tuple[str, str, float] = ("Khác", "📋", 0.0)
     best_score = 0
 
-    for cat in get_categories_config():
+    for cat in _build_category_matchers():
         match_count = 0
-        for keyword in cat["keywords"]:
-            if len(keyword) <= 3:
-                pattern = r"\b" + re.escape(keyword) + r"\b"
-                if re.search(pattern, lower_title) or re.search(pattern, stripped_title):
-                    match_count += 1
-            else:
-                stripped_keyword = _strip_accents(keyword)
-                if keyword in lower_title or stripped_keyword in stripped_title:
-                    match_count += 1
+        for kw, stripped_kw in cat.exact_keywords:
+            if kw in lower_title or stripped_kw in stripped_title:
+                match_count += 1
+        for accented_pat, stripped_pat in cat.regex_patterns:
+            if accented_pat.search(lower_title) or stripped_pat.search(stripped_title):
+                match_count += 1
 
         if match_count > best_score or (
-            match_count == best_score and match_count > 0 and cat["boost"] > best[2]
+            match_count == best_score and match_count > 0 and cat.boost > best[2]
         ):
-            best = (cat["name"], cat["emoji"], cat["boost"])
+            best = (cat.name, cat.emoji, cat.boost)
             best_score = match_count
 
     return best

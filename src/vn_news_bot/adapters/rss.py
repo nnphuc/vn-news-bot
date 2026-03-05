@@ -37,7 +37,7 @@ async def fetch_rss_feed(url: str, source_name: str) -> list[NewsArticle]:
             response = await client.get(url)
             response.raise_for_status()
     except httpx.HTTPError:
-        logger.warning("Failed to fetch RSS feed: %s", url)
+        logger.warning("Failed to fetch RSS feed: {}", url)
         return []
 
     feed = feedparser.parse(response.text)

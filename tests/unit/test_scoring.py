@@ -9,10 +9,10 @@ from vn_news_bot.services.scoring import (
     _find_clusters,
     _jaccard_similarity,
     _normalize_title,
-    _strip_accents,
     _tokenize,
     score_articles,
 )
+from vn_news_bot.utils.text import strip_accents
 
 
 def _make_article(
@@ -121,13 +121,13 @@ class TestFindClusters:
 
 class TestStripAccents:
     def test_removes_vietnamese_accents(self) -> None:
-        assert _strip_accents("Việt Nam") == "viet nam"
+        assert strip_accents("Việt Nam") == "viet nam"
 
     def test_handles_d_stroke(self) -> None:
-        assert _strip_accents("Đà Nẵng") == "da nang"
+        assert strip_accents("Đà Nẵng") == "da nang"
 
     def test_already_unaccented(self) -> None:
-        assert _strip_accents("hello world") == "hello world"
+        assert strip_accents("hello world") == "hello world"
 
 
 class TestClassifyArticle:

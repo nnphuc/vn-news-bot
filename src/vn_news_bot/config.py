@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     telegram_bot_token: str
-    openweather_api_key: str
+    openweather_api_key: str = ""
     newsapi_key: str = ""
     default_cities: list[str] = ["Hanoi", "Ho Chi Minh City", "Da Nang"]
     log_level: str = "INFO"
@@ -153,4 +153,4 @@ def get_scoring_limits() -> dict[str, int]:
 
 
 def get_rss_category_map() -> dict[str, str]:
-    return cast(dict[str, str], load_scoring_config().get("rss_category_map", {}))
+    return cast(dict[str, str], load_scoring_config()["rss_category_map"])

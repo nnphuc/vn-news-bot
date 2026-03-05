@@ -64,7 +64,7 @@ async def _fetch_thoitiet(city: str, config: dict[str, Any]) -> WeatherReport | 
             response.raise_for_status()
             return _parse_thoitiet_html(response.text, city)
     except httpx.HTTPError:
-        logger.warning("Failed to fetch from thoitiet.vn for %s", city)
+        logger.warning("Failed to fetch from thoitiet.vn for {}", city)
         return None
 
 
@@ -82,7 +82,7 @@ async def _fetch_accuweather(city: str, config: dict[str, Any]) -> WeatherReport
             response.raise_for_status()
             return _parse_accuweather_html(response.text, city)
     except httpx.HTTPError:
-        logger.warning("Failed to fetch from AccuWeather for %s", city)
+        logger.warning("Failed to fetch from AccuWeather for {}", city)
         return None
 
 
@@ -162,7 +162,7 @@ async def fetch_7day_forecast(city: str) -> list[DailyForecast]:
             response.raise_for_status()
             return _parse_7day_html(response.text)
     except httpx.HTTPError:
-        logger.warning("Failed to fetch 7-day forecast for %s", city)
+        logger.warning("Failed to fetch 7-day forecast for {}", city)
         return []
 
 

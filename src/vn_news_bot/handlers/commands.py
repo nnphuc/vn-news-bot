@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import re
-import unicodedata
 from collections.abc import Callable, Coroutine
 from typing import Any
 
@@ -24,6 +22,7 @@ from vn_news_bot.services.disaster import get_disaster_alerts
 from vn_news_bot.services.news import get_latest_news
 from vn_news_bot.services.scheduler import send_disaster_check
 from vn_news_bot.services.weather import get_forecast_for_city, get_weather_for_city
+from vn_news_bot.utils.text import strip_accents
 
 _ERROR_MSG = "Có lỗi xảy ra, vui lòng thử lại sau."
 _SEARCH_POOL_SIZE = 200
@@ -90,6 +89,7 @@ def _resolve_city(name: str) -> str | None:
     return get_city_aliases().get(lower)
 
 
+@_safe_handler
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.effective_message or not update.effective_chat:
         return
@@ -177,12 +177,6 @@ async def trending_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     )
 
 
-def _strip_accents(text: str) -> str:
-    text = text.replace("Đ", "D").replace("đ", "d")
-    nfkd = unicodedata.normalize("NFKD", text)
-    return re.sub(r"[\u0300-\u036f]", "", nfkd).lower()
-
-
 @_safe_handler
 async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.effective_message:
@@ -193,7 +187,7 @@ async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     keyword = " ".join(context.args).lower()
-    keyword_no_accent = _strip_accents(keyword)
+    keyword_no_accent = strip_accents(keyword)
 
     scored = await get_latest_news(
         newsapi_key=_get_newsapi_key(context), max_items=_SEARCH_POOL_SIZE
@@ -201,8 +195,7 @@ async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     results = [
         s
         for s in scored
-        if keyword in s.article.title.lower()
-        or keyword_no_accent in _strip_accents(s.article.title)
+        if keyword in s.article.title.lower() or keyword_no_accent in strip_accents(s.article.title)
     ][:_MAX_FILTERED_ITEMS]
     if results:
         message = format_scored_news_message(results)
@@ -277,6 +270,7 @@ async def disaster_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     )
 
 
+@_safe_handler
 async def subscribe_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.effective_message or not update.effective_chat:
         return
@@ -307,6 +301,7 @@ async def subscribe_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     )
 
 
+@_safe_handler
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.effective_message:
         return
@@ -314,6 +309,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.effective_message.reply_text(_build_help_text(), parse_mode="Markdown")
 
 
+@_safe_handler
 async def unsubscribe_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.effective_message or not update.effective_chat:
         return

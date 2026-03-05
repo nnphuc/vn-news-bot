@@ -202,6 +202,14 @@ def format_disaster_message(alerts: list[DisasterAlert]) -> str:
 
     lines = ["⚠️ *Cảnh báo thiên tai*\n"]
     for alert in alerts:
-        lines.append(alert.display_text)
+        severity = _escape_md(alert.severity.value.upper())
+        title = _escape_md(alert.title)
+        desc = _escape_md(alert.description)
+        source = _escape_md(alert.source)
+        lines.append(
+            f"{alert.severity_emoji} *\\[{severity}\\]* {title}\n"
+            f"{desc}\n"
+            f"Nguồn: _{source}_ | {alert.url}"
+        )
         lines.append("")
     return "\n".join(lines)

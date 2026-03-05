@@ -115,31 +115,38 @@ def _has_sudden_change(
     return temp_diff >= temp_threshold or humidity_diff >= humidity_threshold
 
 
+_MAX_SENT_URLS = 500
+_PRUNE_KEEP = 300
+
+
 async def send_disaster_check(context: ContextTypes.DEFAULT_TYPE) -> None:
     if not context.job or not context.job.chat_id:
+        logger.warning("send_disaster_check called without job context, skipping")
         return
 
+    chat_id = context.job.chat_id
     alerts = await get_disaster_alerts()
     if not alerts:
         return
 
     bot_data = context.bot_data or {}
-    sent_urls: set[str] = bot_data.setdefault("_sent_disaster_urls", set())
-    new_alerts = [a for a in alerts if a.url not in sent_urls]
+    list_key = f"_sent_disaster_list_{chat_id}"
+    sent_list: list[str] = bot_data.setdefault(list_key, [])
+    sent_set = set(sent_list)
+    new_alerts = [a for a in alerts if a.url not in sent_set]
     if not new_alerts:
         return
 
     message = format_disaster_message(new_alerts)
     try:
         await context.bot.send_message(
-            chat_id=context.job.chat_id,
+            chat_id=chat_id,
             text=message,
             parse_mode="Markdown",
             disable_web_page_preview=True,
         )
-        sent_urls.update(a.url for a in new_alerts)
-        # Keep only last 500 URLs to prevent unbounded growth
-        if len(sent_urls) > 500:
-            bot_data["_sent_disaster_urls"] = set(list(sent_urls)[-300:])
+        sent_list.extend(a.url for a in new_alerts)
+        if len(sent_list) > _MAX_SENT_URLS:
+            bot_data[list_key] = sent_list[-_PRUNE_KEEP:]
     except Exception:
-        logger.warning("Failed to send disaster alert to chat {}", context.job.chat_id)
+        logger.warning("Failed to send disaster alert to chat {}", chat_id)
