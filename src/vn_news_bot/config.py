@@ -152,5 +152,9 @@ def get_scoring_limits() -> dict[str, int]:
     return cast(dict[str, int], load_scoring_config()["limits"])
 
 
+def get_nlp_category_map() -> dict[str, str]:
+    return cast(dict[str, str], load_scoring_config()["nlp_category_map"])
+
+
 def get_rss_category_map() -> dict[str, str]:
     return cast(dict[str, str], load_scoring_config()["rss_category_map"])

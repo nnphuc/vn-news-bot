@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from unittest.mock import patch
 
 from vn_news_bot.domain.models import NewsArticle, ScoreBreakdown, ScoredArticle
 from vn_news_bot.services.scoring import (
     _classify_article,
     _classify_with_fallback,
+    _classify_with_nlp,
     _find_clusters,
     _jaccard_similarity,
     _normalize_title,
     _tokenize,
+    _tokenize_vi,
     score_articles,
 )
 from vn_news_bot.utils.text import strip_accents
@@ -130,6 +133,56 @@ class TestStripAccents:
         assert strip_accents("hello world") == "hello world"
 
 
+class TestTokenizeVi:
+    def test_segments_compound_words(self) -> None:
+        tokens = _tokenize_vi("Thủ tướng họp bàn chính sách")
+        assert "thủ tướng" in tokens
+        assert "chính sách" in tokens
+
+    def test_lowercase_output(self) -> None:
+        tokens = _tokenize_vi("GDP Tăng Trưởng")
+        assert all(t == t.lower() for t in tokens)
+
+    def test_empty_input(self) -> None:
+        assert _tokenize_vi("") == [] or _tokenize_vi("") == [""]
+        # word_tokenize may return empty list or single empty string
+
+    def test_fallback_on_simple_text(self) -> None:
+        tokens = _tokenize_vi("hello world test")
+        assert "hello" in tokens
+        assert "world" in tokens
+
+
+class TestClassifyWithNlp:
+    @patch("vn_news_bot.services.scoring.classify")
+    def test_maps_nlp_category(self, mock_classify: object) -> None:
+        from unittest.mock import MagicMock
+
+        mock = MagicMock(return_value="The thao")
+        with patch("vn_news_bot.services.scoring.classify", mock):
+            result = _classify_with_nlp("Đội tuyển bóng rổ tranh tài")
+            assert result is not None
+            assert result[0] == "Thể thao"
+
+    @patch("vn_news_bot.services.scoring.classify")
+    def test_returns_none_for_unmapped(self, mock_classify: object) -> None:
+        from unittest.mock import MagicMock
+
+        mock = MagicMock(return_value="Unknown Category")
+        with patch("vn_news_bot.services.scoring.classify", mock):
+            result = _classify_with_nlp("Some random title")
+            assert result is None
+
+    @patch("vn_news_bot.services.scoring.classify")
+    def test_handles_classify_exception(self, mock_classify: object) -> None:
+        from unittest.mock import MagicMock
+
+        mock = MagicMock(side_effect=RuntimeError("model error"))
+        with patch("vn_news_bot.services.scoring.classify", mock):
+            result = _classify_with_nlp("Any title")
+            assert result is None
+
+
 class TestClassifyArticle:
     def test_politics(self) -> None:
         name, emoji, _boost = _classify_article("Thủ tướng họp bàn chính sách mới")
@@ -164,13 +217,15 @@ class TestClassifyArticle:
 
 
 class TestClassifyWithFallback:
-    def test_rss_category_map_fallback(self) -> None:
+    @patch("vn_news_bot.services.scoring._classify_with_nlp", return_value=None)
+    def test_rss_category_map_fallback(self, _mock_nlp: object) -> None:
         article = _make_article("Tin tức ngắn gọn", category="the-thao")
         name, emoji, _boost = _classify_with_fallback(article)
         assert name == "Thể thao"
         assert emoji == "⚽"
 
-    def test_rss_category_map_vietnamese(self) -> None:
+    @patch("vn_news_bot.services.scoring._classify_with_nlp", return_value=None)
+    def test_rss_category_map_vietnamese(self, _mock_nlp: object) -> None:
         article = _make_article("Tin mới nhất", category="kinh doanh")
         name, _emoji, _boost = _classify_with_fallback(article)
         assert name == "Kinh tế"
@@ -179,6 +234,16 @@ class TestClassifyWithFallback:
         article = _make_article("Ngân hàng tăng lãi suất mạnh", category="the-thao")
         name, _emoji, _boost = _classify_with_fallback(article)
         assert name == "Kinh tế"
+
+    @patch("vn_news_bot.services.scoring.classify")
+    def test_nlp_fallback_before_rss(self, mock_classify: object) -> None:
+        from unittest.mock import MagicMock
+
+        mock = MagicMock(return_value="The thao")
+        with patch("vn_news_bot.services.scoring.classify", mock):
+            article = _make_article("Tin tức ngắn gọn không keyword", category="kinh doanh")
+            name, _emoji, _boost = _classify_with_fallback(article)
+            assert name == "Thể thao"
 
 
 class TestScoreArticles:

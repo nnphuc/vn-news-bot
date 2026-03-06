@@ -7,8 +7,12 @@ import unicodedata
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from loguru import logger
+from underthesea import classify, word_tokenize
+
 from vn_news_bot.config import (
     get_categories_config,
+    get_nlp_category_map,
     get_recency_config,
     get_rss_category_map,
     get_scoring_limits,
@@ -30,6 +34,20 @@ def _normalize_title(title: str) -> str:
     text = unicodedata.normalize("NFC", text)
     text = re.sub(r"[^\w\s]", " ", text)
     return re.sub(r"\s+", " ", text).strip()
+
+
+def _tokenize_vi(title: str) -> list[str]:
+    """Segment Vietnamese title using underthesea word_tokenize.
+
+    Returns lowercased tokens with underscores replaced by spaces
+    so compound words like 'thủ_tướng' become 'thủ tướng' matching config keywords.
+    """
+    try:
+        raw_tokens: list[str] = word_tokenize(title)
+    except Exception:
+        logger.debug("word_tokenize failed, falling back to simple split")
+        raw_tokens = title.split()
+    return [t.replace("_", " ").lower().strip() for t in raw_tokens if t.strip()]
 
 
 def _tokenize(text: str, stopwords: set[str]) -> set[str]:
@@ -112,54 +130,43 @@ class _CategoryMatcher:
     name: str
     emoji: str
     boost: float
-    exact_keywords: list[tuple[str, str]]  # (keyword, stripped_keyword)
-    regex_patterns: list[tuple[re.Pattern[str], re.Pattern[str]]]  # (accented, stripped)
+    keywords_accented: frozenset[str]
+    keywords_stripped: frozenset[str]
 
 
 @functools.cache
 def _build_category_matchers() -> tuple[_CategoryMatcher, ...]:
-    """Pre-compile keyword patterns and strip accents once at config load."""
+    """Build keyword sets (accented + stripped) for O(1) token lookup."""
     matchers: list[_CategoryMatcher] = []
     for cat in get_categories_config():
-        exact: list[tuple[str, str]] = []
-        regex: list[tuple[re.Pattern[str], re.Pattern[str]]] = []
+        accented: set[str] = set()
+        stripped: set[str] = set()
         for kw in cat["keywords"]:
-            stripped_kw = strip_accents(kw)
-            if len(kw) <= 3:
-                regex.append(
-                    (
-                        re.compile(r"\b" + re.escape(kw) + r"\b"),
-                        re.compile(r"\b" + re.escape(stripped_kw) + r"\b"),
-                    )
-                )
-            else:
-                exact.append((kw, stripped_kw))
+            accented.add(kw.lower())
+            stripped.add(strip_accents(kw))
         matchers.append(
             _CategoryMatcher(
                 name=cat["name"],
                 emoji=cat["emoji"],
                 boost=cat["boost"],
-                exact_keywords=exact,
-                regex_patterns=regex,
+                keywords_accented=frozenset(accented),
+                keywords_stripped=frozenset(stripped),
             )
         )
     return tuple(matchers)
 
 
 def _classify_article(title: str) -> tuple[str, str, float]:
-    lower_title = _normalize_title(title)
-    stripped_title = strip_accents(lower_title)
+    tokens = _tokenize_vi(title)
+    tokens_stripped = [strip_accents(t) for t in tokens]
 
     best: tuple[str, str, float] = ("Khác", "📋", 0.0)
     best_score = 0
 
     for cat in _build_category_matchers():
         match_count = 0
-        for kw, stripped_kw in cat.exact_keywords:
-            if kw in lower_title or stripped_kw in stripped_title:
-                match_count += 1
-        for accented_pat, stripped_pat in cat.regex_patterns:
-            if accented_pat.search(lower_title) or stripped_pat.search(stripped_title):
+        for tok, tok_stripped in zip(tokens, tokens_stripped, strict=True):
+            if tok in cat.keywords_accented or tok_stripped in cat.keywords_stripped:
                 match_count += 1
 
         if match_count > best_score or (
@@ -171,10 +178,32 @@ def _classify_article(title: str) -> tuple[str, str, float]:
     return best
 
 
+def _classify_with_nlp(title: str) -> tuple[str, str, float] | None:
+    """Use underthesea ML classifier as fallback, mapping to our categories."""
+    try:
+        result: str = classify(title)
+    except Exception:
+        logger.debug("underthesea classify failed for title: {}", title)
+        return None
+    nlp_map = get_nlp_category_map()
+    mapped_name = nlp_map.get(result)
+    if not mapped_name:
+        return None
+    for cat in get_categories_config():
+        if cat["name"] == mapped_name:
+            return cat["name"], cat["emoji"], cat["boost"]
+    return None
+
+
 def _classify_with_fallback(article: NewsArticle) -> tuple[str, str, float]:
     name, emoji, boost = _classify_article(article.title)
     if name != "Khác":
         return name, emoji, boost
+
+    nlp_result = _classify_with_nlp(article.title)
+    if nlp_result is not None:
+        return nlp_result
+
     if article.category:
         rss_map = get_rss_category_map()
         mapped_name = rss_map.get(article.category.lower())

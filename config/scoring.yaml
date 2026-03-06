@@ -28,6 +28,18 @@ trending:
   min_sources: 2
   max_source_divisor: 3
 
+nlp_category_map:
+  "The thao": "Thể thao"
+  "Kinh doanh": "Kinh tế"
+  "Chinh tri Xa hoi": "Thời sự"
+  "Vi tinh": "Công nghệ"
+  "Suc khoe": "Sức khỏe"
+  "Phap luat": "Pháp luật"
+  "Doi song": "Giải trí"
+  "The gioi": "Quốc tế"
+  "Giao duc": "Giáo dục"
+  "Khoa hoc": "Công nghệ"
+
 rss_category_map:
   "thời sự": "Thời sự"
   "thoi-su": "Thời sự"
