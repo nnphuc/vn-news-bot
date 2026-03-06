@@ -142,7 +142,7 @@ async def send_disaster_check(context: ContextTypes.DEFAULT_TYPE) -> None:
         await context.bot.send_message(
             chat_id=chat_id,
             text=message,
-            parse_mode="Markdown",
+            parse_mode="HTML",
             disable_web_page_preview=True,
         )
         sent_list.extend(a.url for a in new_alerts)

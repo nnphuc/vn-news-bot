@@ -11,11 +11,17 @@ from vn_news_bot.domain.models import (
 from vn_news_bot.services.weather import get_forecast_suggestion, get_weather_suggestion
 
 _MD_SPECIAL = str.maketrans({"_": r"\_", "*": r"\*", "`": r"\`", "[": r"\["})
+_HTML_SPECIAL = str.maketrans({"&": "&amp;", "<": "&lt;", ">": "&gt;"})
 
 
 def _escape_md(text: str) -> str:
     """Escape Telegram legacy Markdown V1 special characters."""
     return text.translate(_MD_SPECIAL)
+
+
+def _escape_html(text: str) -> str:
+    """Escape HTML special characters for Telegram HTML parse mode."""
+    return text.translate(_HTML_SPECIAL)
 
 
 def format_news_message(articles: list[NewsArticle]) -> str:
@@ -200,16 +206,16 @@ def format_disaster_message(alerts: list[DisasterAlert]) -> str:
     if not alerts:
         return "Không có cảnh báo thiên tai."
 
-    lines = ["⚠️ *Cảnh báo thiên tai*\n"]
+    lines = ["⚠️ <b>Cảnh báo thiên tai</b>\n"]
     for alert in alerts:
-        severity = _escape_md(alert.severity.value.upper())
-        title = _escape_md(alert.title)
-        desc = _escape_md(alert.description)
-        source = _escape_md(alert.source)
+        severity = _escape_html(alert.severity.value.upper())
+        title = _escape_html(alert.title)
+        desc = _escape_html(alert.description)
+        source = _escape_html(alert.source)
         lines.append(
-            f"{alert.severity_emoji} *\\[{severity}\\]* {title}\n"
+            f'{alert.severity_emoji} <b>[{severity}]</b> {title}\n'
             f"{desc}\n"
-            f"Nguồn: _{source}_ | {alert.url}"
+            f'Nguồn: <i>{source}</i> | {alert.url}'
         )
         lines.append("")
     return "\n".join(lines)

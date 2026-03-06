@@ -266,7 +266,7 @@ async def disaster_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     alerts = await get_disaster_alerts()
     message = format_disaster_message(alerts)
     await update.effective_message.reply_text(
-        message, parse_mode="Markdown", disable_web_page_preview=True
+        message, parse_mode="HTML", disable_web_page_preview=True
     )
 
 
