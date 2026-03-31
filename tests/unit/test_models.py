@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from vn_news_bot.domain.models import AlertSeverity, DisasterAlert, NewsArticle, WeatherReport
+from vn_news_bot.domain.models import AlertSeverity, ArticleClassification, DisasterAlert, NewsArticle, WeatherReport
 
 
 def test_news_article_display_text() -> None:
@@ -83,3 +83,28 @@ def test_news_article_is_frozen() -> None:
     )
     with pytest.raises(AttributeError):
         article.title = "Modified"  # type: ignore[misc]
+
+
+def test_article_classification_defaults() -> None:
+    c = ArticleClassification()
+    assert c.disaster_severity == "none"
+    assert c.is_hot is False
+
+
+def test_article_classification_custom() -> None:
+    c = ArticleClassification(disaster_severity="high", is_hot=True)
+    assert c.disaster_severity == "high"
+    assert c.is_hot is True
+
+
+def test_article_classification_is_disaster() -> None:
+    assert ArticleClassification(disaster_severity="high").is_disaster is True
+    assert ArticleClassification(disaster_severity="low").is_disaster is True
+    assert ArticleClassification(disaster_severity="none").is_disaster is False
+
+
+def test_article_classification_to_alert_severity() -> None:
+    assert ArticleClassification(disaster_severity="high").to_alert_severity() == AlertSeverity.HIGH
+    assert ArticleClassification(disaster_severity="medium").to_alert_severity() == AlertSeverity.MEDIUM
+    assert ArticleClassification(disaster_severity="low").to_alert_severity() == AlertSeverity.LOW
+    assert ArticleClassification(disaster_severity="none").to_alert_severity() is None

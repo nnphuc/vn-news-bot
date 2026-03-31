@@ -104,3 +104,21 @@ class DisasterAlert:
             f"{self.description}\n"
             f"Nguồn: {self.source} | {self.url}"
         )
+
+
+@dataclass(frozen=True)
+class ArticleClassification:
+    disaster_severity: str = "none"  # "none" | "low" | "medium" | "high"
+    is_hot: bool = False
+
+    @property
+    def is_disaster(self) -> bool:
+        return self.disaster_severity != "none"
+
+    def to_alert_severity(self) -> AlertSeverity | None:
+        mapping = {
+            "low": AlertSeverity.LOW,
+            "medium": AlertSeverity.MEDIUM,
+            "high": AlertSeverity.HIGH,
+        }
+        return mapping.get(self.disaster_severity)
