@@ -9,6 +9,7 @@ from loguru import logger
 from telegram import BotCommand
 from telegram.ext import Application, ApplicationBuilder, CommandHandler
 
+from vn_news_bot.adapters.llm import LLMClassifier
 from vn_news_bot.config import (
     get_news_schedule,
     get_schedule_timezone,
@@ -135,6 +136,18 @@ def main() -> None:
     app.bot_data["openweather_api_key"] = settings.openweather_api_key
     app.bot_data["newsapi_key"] = settings.newsapi_key
     app.bot_data["default_cities"] = settings.default_cities
+
+    if settings.llm_api_key:
+        app.bot_data["llm_classifier"] = LLMClassifier(
+            api_key=settings.llm_api_key,
+            base_url=settings.llm_base_url,
+            model=settings.llm_model,
+            timeout=settings.llm_timeout,
+        )
+        logger.info("LLM classifier initialized (model={})", settings.llm_model)
+    else:
+        app.bot_data["llm_classifier"] = None
+        logger.warning("LLM_API_KEY not set, using keyword fallback for disaster alerts")
 
     handlers = [
         ("start", start_command),

@@ -5,6 +5,7 @@ from telegram.ext import ContextTypes
 
 from vn_news_bot.adapters.telegram import (
     format_disaster_message,
+    format_hot_news_digest,
     format_scored_news_message,
     format_weather_alert,
     format_weather_message,
@@ -16,6 +17,7 @@ from vn_news_bot.config import (
 from vn_news_bot.domain.models import WeatherReport
 from vn_news_bot.services.disaster import get_disaster_alerts
 from vn_news_bot.services.news import get_latest_news
+from vn_news_bot.services.scoring import split_hot_articles
 from vn_news_bot.services.weather import get_weather_digest, get_weather_for_city
 
 
@@ -31,15 +33,34 @@ async def send_news_update(context: ContextTypes.DEFAULT_TYPE) -> None:
 
     bot_data = context.bot_data or {}
     newsapi_key = bot_data.get("newsapi_key", "")
+    classifier = bot_data.get("llm_classifier")
+
     scored = await get_latest_news(newsapi_key=newsapi_key)
-    message = format_scored_news_message(scored)
+
+    if classifier is not None:
+        from vn_news_bot.domain.models import ArticleClassification
+
+        classifications: list[ArticleClassification] = []
+        for item in scored:
+            try:
+                c = classifier.classify_article(item.article.title)
+            except Exception:
+                c = ArticleClassification()
+            classifications.append(c)
+
+        hot, regular = split_hot_articles(scored, classifications)
+        message = format_hot_news_digest(hot, regular)
+        parse_mode = "HTML"
+    else:
+        message = format_scored_news_message(scored)
+        parse_mode = "Markdown"
 
     for chat_id in chat_ids:
         try:
             await context.bot.send_message(
                 chat_id=chat_id,
                 text=message,
-                parse_mode="Markdown",
+                parse_mode=parse_mode,
                 disable_web_page_preview=True,
             )
         except Exception:
@@ -125,7 +146,9 @@ async def send_disaster_check(context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     chat_id = context.job.chat_id
-    alerts, _ = await get_disaster_alerts()
+    bot_data = context.bot_data or {}
+    classifier = bot_data.get("llm_classifier")
+    alerts, _ = await get_disaster_alerts(classifier=classifier)
     if not alerts:
         return
 
