@@ -36,3 +36,13 @@ critical_keywords:
 
 limits:
   max_disaster_items: 5
+
+exclude_phrases:
+  - "bão giá"
+  - "bão xăng dầu"
+  - "bão lãi suất"
+  - "bão hòa"
+  - "bão thù"
+  - "cơn bão mạng"
+  - "bão sale"
+  - "bão khuyến mãi"

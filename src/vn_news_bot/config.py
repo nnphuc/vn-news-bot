@@ -158,3 +158,7 @@ def get_nlp_category_map() -> dict[str, str]:
 
 def get_rss_category_map() -> dict[str, str]:
     return cast(dict[str, str], load_scoring_config()["rss_category_map"])
+
+
+def get_exclude_phrases() -> list[str]:
+    return cast(list[str], load_disaster_config().get("exclude_phrases", []))
