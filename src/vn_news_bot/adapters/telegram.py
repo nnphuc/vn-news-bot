@@ -206,16 +206,56 @@ def format_disaster_message(alerts: list[DisasterAlert]) -> str:
     if not alerts:
         return "Không có cảnh báo thiên tai."
 
-    lines = ["⚠️ <b>Cảnh báo thiên tai</b>\n"]
+    lines = ["⚠️ <b>CẢNH BÁO THIÊN TAI</b>", ""]
     for alert in alerts:
-        severity = _escape_html(alert.severity.value.upper())
         title = _escape_html(alert.title)
         desc = _escape_html(alert.description)
         source = _escape_html(alert.source)
+        time_str = alert.published.strftime("%H:%M")
         lines.append(
-            f'{alert.severity_emoji} <b>[{severity}]</b> {title}\n'
-            f"{desc}\n"
-            f'Nguồn: <i>{source}</i> | {alert.url}'
+            f'{alert.severity_emoji} <a href="{alert.url}"><b>{title}</b></a>\n'
+            f"<blockquote>{desc}</blockquote>\n"
+            f"<i>{source} · {time_str}</i>"
         )
         lines.append("")
+    return "\n".join(lines)
+
+
+def format_hot_news_digest(
+    hot_articles: list[ScoredArticle],
+    regular_articles: list[ScoredArticle],
+) -> str:
+    if not hot_articles and not regular_articles:
+        return "Không có tin tức mới."
+
+    lines: list[str] = []
+
+    if hot_articles:
+        lines.append("🔥 <b>TIN NÓNG</b>")
+        lines.append("")
+        for item in hot_articles:
+            title = _escape_html(item.article.title)
+            source = _escape_html(item.article.source)
+            desc = _escape_html(item.article.summary)
+            time_str = item.article.published.strftime("%H:%M")
+            lines.append(
+                f'📌 <a href="{item.article.url}"><b>{title}</b></a>\n'
+                f"<blockquote>{desc}</blockquote>\n"
+                f"<i>{source} · {time_str}</i>"
+            )
+            lines.append("")
+
+    if regular_articles:
+        lines.append("📰 <b>TIN TỨC</b>")
+        lines.append("")
+        for item in regular_articles:
+            title = _escape_html(item.article.title)
+            source = _escape_html(item.article.source)
+            time_str = item.article.published.strftime("%H:%M")
+            lines.append(
+                f'▫️ <a href="{item.article.url}">{title}</a>\n'
+                f"   <i>{source} · {time_str}</i>"
+            )
+            lines.append("")
+
     return "\n".join(lines)
