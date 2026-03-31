@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
-from llm_zingplay import ZingPlayChat
 from loguru import logger
+from openai import OpenAI
 
 from vn_news_bot.domain.models import ArticleClassification
 
 _SYSTEM_PROMPT = (
+    "/no_think\n"
     "Classify Vietnamese news. Reply JSON only.\n"
     'disaster: none|low|medium|high (real natural disasters only, not metaphors like "bão giá")\n'
     "hot: true if breaking/major news"
@@ -17,7 +19,7 @@ _VALID_SEVERITIES = {"none", "low", "medium", "high"}
 
 
 class LLMClassifier:
-    """Classifies news articles using ZingPlay LLM."""
+    """Classifies news articles using OpenAI-compatible LLM."""
 
     def __init__(
         self,
@@ -26,18 +28,23 @@ class LLMClassifier:
         model: str,
         timeout: float,
     ) -> None:
-        self._client = ZingPlayChat(api_key=api_key, base_url=base_url)
+        self._client = OpenAI(api_key=api_key, base_url=base_url, timeout=timeout)
         self._model = model
         self._timeout = timeout
 
     def classify_article(self, title: str) -> ArticleClassification:
         try:
-            raw = self._client.chat(
-                title,
+            messages: list[dict[str, Any]] = [
+                {"role": "system", "content": _SYSTEM_PROMPT},
+                {"role": "user", "content": title},
+            ]
+            response = self._client.chat.completions.create(
                 model=self._model,
-                system=_SYSTEM_PROMPT,
+                messages=messages,
                 temperature=0.0,
+                extra_body={"chat_template_kwargs": {"enable_thinking": False}},
             )
+            raw = response.choices[0].message.content or ""
             return _parse_response(raw)
         except Exception:
             logger.warning("LLM classification failed for: {}", title)
