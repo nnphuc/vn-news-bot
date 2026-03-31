@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     newsapi_key: str = ""
     default_cities: list[str] = ["Hanoi", "Ho Chi Minh City", "Da Nang"]
     log_level: str = "INFO"
+    llm_api_key: str = ""
+    llm_base_url: str = "https://chat.zingplay.com/api"
+    llm_model: str = "local-model"
+    llm_timeout: float = 15.0
 
 
 def load_settings() -> Settings:
@@ -162,3 +166,19 @@ def get_rss_category_map() -> dict[str, str]:
 
 def get_exclude_phrases() -> list[str]:
     return cast(list[str], load_disaster_config().get("exclude_phrases", []))
+
+
+def get_llm_api_key() -> str:
+    return load_settings().llm_api_key
+
+
+def get_llm_base_url() -> str:
+    return load_settings().llm_base_url
+
+
+def get_llm_model() -> str:
+    return load_settings().llm_model
+
+
+def get_llm_timeout() -> float:
+    return load_settings().llm_timeout
