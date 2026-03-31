@@ -395,3 +395,5 @@ display_categories:
       - Công nghệ
   - label: "📋 Tin khác"
     match: []
+
+hot_score_threshold: 80

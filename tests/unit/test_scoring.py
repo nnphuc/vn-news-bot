@@ -325,3 +325,40 @@ class TestScoreArticles:
             trending_sources=["VnExpress"],
         )
         assert scored.is_trending is False
+
+
+class TestHotNewsScoring:
+    def test_hot_article_gets_split(self) -> None:
+        from vn_news_bot.domain.models import ArticleClassification
+        from vn_news_bot.services.scoring import split_hot_articles
+
+        now = datetime.now(UTC)
+        articles = [
+            _make_article("Thủ tướng ban hành chính sách mới", hours_ago=1),
+            _make_article("Tin giải trí ngày hôm nay", hours_ago=1),
+        ]
+        classifications = [
+            ArticleClassification(disaster_severity="none", is_hot=True),
+            ArticleClassification(disaster_severity="none", is_hot=False),
+        ]
+
+        scored = score_articles(articles, now=now)
+        hot, regular = split_hot_articles(scored, classifications)
+
+        assert len(hot) == 1
+        assert hot[0].article.title == "Thủ tướng ban hành chính sách mới"
+        assert len(regular) >= 1
+
+    def test_no_hot_articles(self) -> None:
+        from vn_news_bot.domain.models import ArticleClassification
+        from vn_news_bot.services.scoring import split_hot_articles
+
+        now = datetime.now(UTC)
+        articles = [_make_article("Tin thường ngày", hours_ago=1)]
+        classifications = [ArticleClassification(disaster_severity="none", is_hot=False)]
+
+        scored = score_articles(articles, now=now)
+        hot, regular = split_hot_articles(scored, classifications)
+
+        assert len(hot) == 0
+        assert len(regular) == 1

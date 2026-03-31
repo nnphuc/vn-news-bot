@@ -182,3 +182,7 @@ def get_llm_model() -> str:
 
 def get_llm_timeout() -> float:
     return load_settings().llm_timeout
+
+
+def get_hot_score_threshold() -> int:
+    return cast(int, load_scoring_config().get("hot_score_threshold", 80))

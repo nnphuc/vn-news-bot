@@ -22,6 +22,7 @@ from vn_news_bot.config import (
     get_trending_config,
 )
 from vn_news_bot.domain.models import (
+    ArticleClassification,
     NewsArticle,
     ScoreBreakdown,
     ScoredArticle,
@@ -306,3 +307,28 @@ def score_articles(
     others = [s for s in scored if s.article.url not in trending_urls][:remaining]
 
     return trending + others
+
+
+def split_hot_articles(
+    scored: list[ScoredArticle],
+    classifications: list[ArticleClassification],
+) -> tuple[list[ScoredArticle], list[ScoredArticle]]:
+    """Split scored articles into hot and regular based on LLM classification.
+
+    Classifications are matched to scored articles by position. If there are
+    fewer classifications than scored articles, extras go to regular.
+    """
+    hot_urls: set[str] = set()
+    for i, classification in enumerate(classifications):
+        if classification.is_hot and i < len(scored):
+            hot_urls.add(scored[i].article.url)
+
+    hot: list[ScoredArticle] = []
+    regular: list[ScoredArticle] = []
+    for item in scored:
+        if item.article.url in hot_urls:
+            hot.append(item)
+        else:
+            regular.append(item)
+
+    return hot, regular
