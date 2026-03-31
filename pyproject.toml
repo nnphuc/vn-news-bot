@@ -12,6 +12,7 @@ dependencies = [
     "pyyaml>=6.0",
     "loguru>=0.7.3",
     "underthesea>=6.8",
+    "openai>=1.0",
 ]
 
 [project.scripts]

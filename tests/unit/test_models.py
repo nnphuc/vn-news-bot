@@ -4,7 +4,13 @@ from datetime import UTC, datetime
 
 import pytest
 
-from vn_news_bot.domain.models import AlertSeverity, ArticleClassification, DisasterAlert, NewsArticle, WeatherReport
+from vn_news_bot.domain.models import (
+    AlertSeverity,
+    ArticleClassification,
+    DisasterAlert,
+    NewsArticle,
+    WeatherReport,
+)
 
 
 def test_news_article_display_text() -> None:
@@ -104,7 +110,9 @@ def test_article_classification_is_disaster() -> None:
 
 
 def test_article_classification_to_alert_severity() -> None:
-    assert ArticleClassification(disaster_severity="high").to_alert_severity() == AlertSeverity.HIGH
-    assert ArticleClassification(disaster_severity="medium").to_alert_severity() == AlertSeverity.MEDIUM
+    high = ArticleClassification(disaster_severity="high")
+    medium = ArticleClassification(disaster_severity="medium")
+    assert high.to_alert_severity() == AlertSeverity.HIGH
+    assert medium.to_alert_severity() == AlertSeverity.MEDIUM
     assert ArticleClassification(disaster_severity="low").to_alert_severity() == AlertSeverity.LOW
     assert ArticleClassification(disaster_severity="none").to_alert_severity() is None

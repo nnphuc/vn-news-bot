@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import json
-from typing import Any
 
 from loguru import logger
 from openai import OpenAI
+from openai.types.chat import ChatCompletionMessageParam
 
 from vn_news_bot.domain.models import ArticleClassification
 
@@ -34,7 +34,7 @@ class LLMClassifier:
 
     def classify_article(self, title: str) -> ArticleClassification:
         try:
-            messages: list[dict[str, Any]] = [
+            messages: list[ChatCompletionMessageParam] = [
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user", "content": title},
             ]
