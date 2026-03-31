@@ -125,7 +125,7 @@ async def send_disaster_check(context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     chat_id = context.job.chat_id
-    alerts = await get_disaster_alerts()
+    alerts, _ = await get_disaster_alerts()
     if not alerts:
         return
 
